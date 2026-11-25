@@ -1,25 +1,34 @@
-"""Copy the entry image into the make.fun output directory.
+#!/usr/bin/env python3
+"""Entry point for news-image-20261125.
 
-Standard library only, no network. The output directory comes from
-MAKEFUN_OUTPUT_DIR and defaults to /output; it is created if missing.
-Local check: mkdir -p out && MAKEFUN_OUTPUT_DIR=out python3 main.py
+Copies the finished digest image (entry.png) into the platform output
+directory. Standard library only; nothing is generated at run time.
 """
 
 import os
 import shutil
-from pathlib import Path
+import sys
 
-HERE = Path(__file__).resolve().parent
-SOURCE = HERE / "entry.png"
+HERE = os.path.dirname(os.path.abspath(__file__))
+SOURCE = os.path.join(HERE, "entry.png")
 
 
 def main():
-    out_dir = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
-    out_dir.mkdir(parents=True, exist_ok=True)
-    target = out_dir / "entry.png"
-    shutil.copyfile(SOURCE, target)
-    print(f"copied {SOURCE} -> {target}")
+    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR") or "output"
+    if not os.path.isabs(out_dir):
+        out_dir = os.path.join(HERE, out_dir)
+    os.makedirs(out_dir, exist_ok=True)
+
+    if not os.path.exists(SOURCE):
+        print(f"missing source image: {SOURCE}", file=sys.stderr)
+        return 1
+
+    dest = os.path.join(out_dir, "entry.png")
+    shutil.copyfile(SOURCE, dest)
+    size = os.path.getsize(dest)
+    print(f"copied {SOURCE} -> {dest} ({size} bytes)")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
